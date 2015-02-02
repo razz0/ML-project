@@ -15,6 +15,18 @@ def daterange(start_date, end_date):
     for n in range(int ((end_date - start_date).days)):
         yield start_date + timedelta(n)
 
+def timerange(start_datetime, end_datetime, delta):
+    '''
+    Generate a time range
+
+    >>> print [a.hour for a in timerange(datetime(2012, 2, 5), datetime(2012, 2, 5, 23, 59, 59), timedelta(hours=1))]
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
+    '''
+    current_datetime = start_datetime
+    while current_datetime < end_datetime:
+        yield current_datetime
+        current_datetime += delta
+
 
 class APIHarvester(object):
     """
@@ -37,14 +49,11 @@ class APIHarvester(object):
     FMI_NAMESPACES = {'BsWfs': 'http://xml.fmi.fi/schema/wfs/2.0', 'wfs': "http://www.opengis.net/wfs/2.0"}
 
     def __init__(self, loglevel=logging.INFO, logfile='../harvester.log', ):
-        logging.basicConfig(filename=logfile, level=loglevel, format='%(asctime)s - %(levelname)s - %(message)s')
+        logging.basicConfig(filename=logfile, level=loglevel, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         logging.info('Harvester initialized')
           
         with open(self.FMI_API_FILE, 'r') as f:
             self.fmi_apikey = f.read().replace('\n', '')
-
-        self.data_fmi = {}
-        self.data_hsl = {}
 
     def hsl_api(self, when):
         """
@@ -104,7 +113,7 @@ class APIHarvester(object):
 
     def fmi_observation(self, start_time, end_time, params=FMI_HISTORY_PARAMS):
         """
-        Get weather observation data from FMI API
+        Get weather observation data from FMI API. The API supports only short timespans (max 68h).
         :param start_time: starting date & time string (ISO8601)
         :param end_time: ending date & time string (ISO8601)
         :param params:
@@ -123,12 +132,15 @@ class APIHarvester(object):
 
         observations = defaultdict(dict)
 
+        if not len(elements):
+            logging.warning('No weather elements found from output: %s' % result_xml)
+
         for elem in elements:
             time = elem.xpath('BsWfs:Time', namespaces=self.FMI_NAMESPACES)[0].text
             key = elem.xpath('BsWfs:ParameterName', namespaces=self.FMI_NAMESPACES)[0].text
             value = elem.xpath('BsWfs:ParameterValue', namespaces=self.FMI_NAMESPACES)[0].text
             if key in self.FMI_HISTORY_FIELDS:
-                print "%s - %s - %s" % (time, key, value)
+                logging.debug("%s - %s - %s" % (time, key, value))
                 observations[time].update({key: value})
 
         logging.info('Received weather observations for {num} time instants'.format(num=len(observations)))
@@ -141,21 +153,17 @@ class APIHarvester(object):
         assert self.hsl_api(datetime(2015, 1, 29, 15, 15)) == 0
         print 'HSL OK'
 
-    def harvest(self, harvest_start, harvest_end, delay=2):
+    def harvest_hsl(self, harvest_start, harvest_end, delay=0.5):
         """
-        Harvest actual data and save it to json files.
+        Harvest HSL data and save it to json file. Safe for use by a single process at a time.
+        :param harvest_start: date or datetime
+        :param harvest_end: date or datetime
+        :param delay: delay between API calls in seconds
         """
-        with open(self.FMI_DATA_FILE, 'r') as f:
-            try:
-                self.data_fmi = json.load(f)
-                logging.info('Read %s FMI data objects' % len(self.data_fmi))
-            except ValueError:
-                logging.error('Unable to read %s' % self.FMI_DATA_FILE)
-
         with open(self.HSL_DATA_FILE, 'r') as f:
             try:
-                self.data_hsl = json.load(f)
-                logging.info('Read %s HSL data objects' % len(self.data_hsl))
+                data_hsl = json.load(f)
+                logging.info('Read %s HSL data objects' % len(data_hsl))
             except ValueError:
                 logging.error('Unable to read %s' % self.HSL_DATA_FILE)
 
@@ -163,27 +171,55 @@ class APIHarvester(object):
             for hour in range(0, 23):
                 instant = datetime(single_date.year, single_date.month, single_date.day, hour)
                 datestr = instant.isoformat()
-                # self.data_fmi.update()
-                if self.data_hsl.get(datestr) is None:
-                    self.data_hsl.update({datestr: self.hsl_api(instant)})
+                if data_hsl.get(datestr) is None:
+                    data_hsl.update({datestr: self.hsl_api(instant)})
                     time.sleep(delay)
 
-        with open(self.FMI_DATA_FILE, 'w') as f:
-            logging.info('Dumping %s objects of FMI data to %s' % (len(self.data_fmi), self.FMI_DATA_FILE))
-            json.dump(self.data_fmi, f)
-
         with open(self.HSL_DATA_FILE, 'w') as f:
-            logging.info('Dumping %s objects of HSL data to %s' % (len(self.data_hsl), self.HSL_DATA_FILE))
-            json.dump(self.data_hsl, f)
+            logging.info('Dumping %s objects of HSL data to %s' % (len(data_hsl), self.HSL_DATA_FILE))
+            json.dump(data_hsl, f)
+
+    def harvest_fmi(self, harvest_start, harvest_end):
+        """
+        Harvest FMI data and save it to json file.
+        :param harvest_start: datetime
+        :param harvest_end: datetime
+        """
+        with open(self.FMI_DATA_FILE, 'r') as f:
+            try:
+                data_fmi = json.load(f)
+                logging.info('Read %s FMI data objects' % len(data_fmi))
+            except ValueError:
+                logging.error('Unable to read %s' % self.FMI_DATA_FILE)
+                return
+
+        if not all([t.isoformat() + 'Z' in data_fmi for t in
+                    timerange(harvest_start, harvest_end, timedelta(hours=1))]):
+            data_fmi.update(self.fmi_observation(harvest_start.isoformat() + 'Z', harvest_end.isoformat() + 'Z'))
+        else:
+            logging.info('Time range beginning from %s already harvested' % (harvest_start))
+
+        with open(self.FMI_DATA_FILE, 'w') as f:
+            logging.info('Dumping %s objects of FMI data to %s' % (len(data_fmi), self.FMI_DATA_FILE))
+            json.dump(data_fmi, f)
 
 
 #################################
 
 harvester = APIHarvester()
+#harvester = APIHarvester(loglevel=logging.DEBUG)
 
 #harvester.test_hsl()
 #harvester.fmi_forecast()
-pprint.pprint(harvester.fmi_observation(datetime(2010, 9, 17, 9, 0).isoformat(), datetime(2010, 9, 17, 18, 0).isoformat()))
+#pprint.pprint(harvester.fmi_observation(datetime(2010, 9, 17, 9, 0).isoformat(), datetime(2010, 9, 17, 18, 0).isoformat()))
 
-#harvester.harvest(date(2008, 1, 1), date(2008, 12, 31), delay=1)
+for single_date in daterange(date(2010, 1, 1), date(2011, 12, 31)):
+    harvester.harvest_fmi(datetime(single_date.year, single_date.month, single_date.day, 0, 0, 0),
+                          datetime(single_date.year, single_date.month, single_date.day, 23, 59, 59))
+    harvester.harvest_hsl(single_date, single_date + timedelta(days=1))
+
+#year = 2010
+#for day in [7, 11]:
+#    harvester.harvest_fmi(datetime(year, 1, day), datetime(year, 1, day) + timedelta(days=1))
+#    #harvester.harvest_hsl(date(year, 1, day), date(year, 1, day) + timedelta(days=1))
 
