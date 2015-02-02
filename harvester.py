@@ -28,9 +28,13 @@ class APIHarvester(object):
     FMI_DATA_FILE = '../data_fmi.json'
     HSL_DATA_FILE = '../data_hsl.json'
 
-    FMI_PARAMS = {'request': 'getFeature', 'storedquery_id': 'fmi::forecast::hirlam::surface::point::simple', 'place': 'kaisaniemi,helsinki', 'timestep': 60}
+    FMI_FORECAST_PARAMS = {'request': 'getFeature', 'storedquery_id': 'fmi::forecast::hirlam::surface::point::simple', 'place': 'kaisaniemi,helsinki', 'timestep': 60}
+    FMI_FORECAST_FIELDS = ['Temperature', 'WindSpeedMS', 'Precipitation1h']
+
+    FMI_HISTORY_PARAMS = {'request': 'getFeature', 'storedquery_id': 'fmi::observations::weather::simple', 'place': 'kaisaniemi,helsinki', 'timestep': 60}
+    FMI_HISTORY_FIELDS = ['t2m', 'ws_10min', 'r_1h']
+
     FMI_NAMESPACES = {'BsWfs': 'http://xml.fmi.fi/schema/wfs/2.0', 'wfs': "http://www.opengis.net/wfs/2.0"}
-    FMI_WANTED_VALUES = ['Temperature', 'WindSpeedMS', 'Precipitation1h']
 
     def __init__(self, loglevel=logging.INFO, logfile='../harvester.log', ):
         logging.basicConfig(filename=logfile, level=loglevel, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -69,9 +73,9 @@ class APIHarvester(object):
           
         return int(disruptions)
   
-    def fmi_forecast(self, params=FMI_PARAMS):
+    def fmi_forecast(self, params=FMI_FORECAST_PARAMS):
         """
-        Get Forecast info from HSL API
+        Get weather forecast from FMI API
         """
         url = self.FMI_BASE.format(apikey=self.fmi_apikey)
         
@@ -89,14 +93,47 @@ class APIHarvester(object):
             time = elem.xpath('BsWfs:Time', namespaces=self.FMI_NAMESPACES)[0].text
             key = elem.xpath('BsWfs:ParameterName', namespaces=self.FMI_NAMESPACES)[0].text
             value = elem.xpath('BsWfs:ParameterValue', namespaces=self.FMI_NAMESPACES)[0].text
-            if key in self.FMI_WANTED_VALUES:
+            if key in self.FMI_FORECAST_FIELDS:
                 print "%s - %s - %s" % (time, key, value)
                 forecasts[time].update({key: value})
             
         #pprint.pprint(forecasts)
-        logging.info('Received forecasts for {num} time instants'.format(num=len(forecasts)))
+        logging.info('Received weather forecasts for {num} time instants'.format(num=len(forecasts)))
 
         return forecasts
+
+    def fmi_observation(self, start_time, end_time, params=FMI_HISTORY_PARAMS):
+        """
+        Get weather observation data from FMI API
+        :param start_time: starting date & time string (ISO8601)
+        :param end_time: ending date & time string (ISO8601)
+        :param params:
+        """
+        url = self.FMI_BASE.format(apikey=self.fmi_apikey)
+
+        params.update({'starttime': start_time, 'endtime': end_time})
+
+        logging.info('Getting weather observations from {url} with parameters {params}'.format(url=url, params=params))
+
+        result = requests.get(url, params=params)
+        result_xml = result.text.encode('ascii', 'ignore')
+        result_etree = etree.fromstring(result_xml)
+
+        elements = result_etree.xpath('wfs:member/BsWfs:BsWfsElement', namespaces=self.FMI_NAMESPACES)
+
+        observations = defaultdict(dict)
+
+        for elem in elements:
+            time = elem.xpath('BsWfs:Time', namespaces=self.FMI_NAMESPACES)[0].text
+            key = elem.xpath('BsWfs:ParameterName', namespaces=self.FMI_NAMESPACES)[0].text
+            value = elem.xpath('BsWfs:ParameterValue', namespaces=self.FMI_NAMESPACES)[0].text
+            if key in self.FMI_HISTORY_FIELDS:
+                print "%s - %s - %s" % (time, key, value)
+                observations[time].update({key: value})
+
+        logging.info('Received weather observations for {num} time instants'.format(num=len(observations)))
+
+        return observations
 
     def test_hsl(self):
         assert self.hsl_api(datetime(2010, 9, 17, 9, 0)) == 2
@@ -104,7 +141,7 @@ class APIHarvester(object):
         assert self.hsl_api(datetime(2015, 1, 29, 15, 15)) == 0
         print 'HSL OK'
 
-    def harvest_all(self, harvest_start, harvest_end, delay=2):
+    def harvest(self, harvest_start, harvest_end, delay=2):
         """
         Harvest actual data and save it to json files.
         """
@@ -140,11 +177,13 @@ class APIHarvester(object):
             json.dump(self.data_hsl, f)
 
 
+#################################
+
 harvester = APIHarvester()
 
 #harvester.test_hsl()
+#harvester.fmi_forecast()
+pprint.pprint(harvester.fmi_observation(datetime(2010, 9, 17, 9, 0).isoformat(), datetime(2010, 9, 17, 18, 0).isoformat()))
 
-# harvester.fmi_forecast()
-
-harvester.harvest_all(date(2008, 1, 1), date(2008, 12, 31), delay=1)
+#harvester.harvest(date(2008, 1, 1), date(2008, 12, 31), delay=1)
 
