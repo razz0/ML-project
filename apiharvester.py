@@ -1,3 +1,5 @@
+"""API harvester module"""
+
 from datetime import datetime, timedelta, date
 import time
 import iso8601
@@ -32,7 +34,7 @@ def timerange(start_datetime, end_datetime, delta):
 
 class APIHarvester(object):
     """
-    Harvest data from APIs
+    Harvester class for gathering data from FMI and HSL APIs
     """
 
     HSL_BASE = 'http://www.poikkeusinfo.fi/xml/v2/'

@@ -4,6 +4,7 @@ Modeling the data and doing predictions from the model
 import math
 import numpy as np
 from sklearn import linear_model
+from sklearn.externals import joblib
 
 
 class Model(object):
@@ -15,9 +16,10 @@ class Model(object):
         '''
         Generate model to predict y from x
 
-        :param fmi:
-        :param hsl:
-        :return:
+        :param dates: date range to use for learning
+        :param fmi: FMI observation data as dict
+        :param hsl: HSL disruption data as dict
+        :return: None
         '''
         xx = []
         yy = []
@@ -51,4 +53,7 @@ class Model(object):
 
     def predict(self, x):
         return self.logreg.predict(x)
+
+    def save_model(self):
+        joblib.dump(self.logreg, 'predictor_model.pkl')
 
