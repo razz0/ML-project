@@ -52,12 +52,15 @@ class APIHarvester(object):
 
     FMI_NAMESPACES = {'BsWfs': 'http://xml.fmi.fi/schema/wfs/2.0', 'wfs': "http://www.opengis.net/wfs/2.0"}
 
-    def __init__(self, loglevel=logging.INFO, logfile='../harvester.log', ):
+    def __init__(self, loglevel=logging.INFO, logfile='../harvester.log', apikey=None ):
         logging.basicConfig(filename=logfile, level=loglevel, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         logging.info('Harvester initialized')
 
-        with open(self.FMI_API_FILE, 'r') as f:
-            self.fmi_apikey = f.read().replace('\n', '')
+        if apikey:
+            self.fmi_apikey = apikey
+        else:
+            with open(self.FMI_API_FILE, 'r') as f:
+                self.fmi_apikey = f.read().replace('\n', '')
 
     def read_fmi_datafile(self):
         with open(self.FMI_DATA_FILE, 'r') as f:
