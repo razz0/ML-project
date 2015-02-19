@@ -12,7 +12,7 @@ fmi_data = dict([(x, y) for (x, y) in harvester.read_fmi_datafile().iteritems() 
 hsl_data = dict([(x, y) for (x, y) in harvester.read_hsl_datafile().iteritems() if int(x[:4]) in good_years])
 
 predict_model = Model()
-predict_model.generate_model(fmi_data, hsl_data)
+predict_model.generate_model(fmi_data, hsl_data, C=100.0)
 predict_model.save_model()
 
 print('Model saved')

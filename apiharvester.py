@@ -112,6 +112,7 @@ class APIHarvester(object):
     def fmi_forecast(self, params=FMI_FORECAST_PARAMS):
         """
         Get weather forecast from FMI API
+        :rtype : dict
         """
         url = self.FMI_BASE.format(apikey=self.fmi_apikey)
 
@@ -130,7 +131,7 @@ class APIHarvester(object):
             key = elem.xpath('BsWfs:ParameterName', namespaces=self.FMI_NAMESPACES)[0].text
             value = elem.xpath('BsWfs:ParameterValue', namespaces=self.FMI_NAMESPACES)[0].text
             if key in self.FMI_FORECAST_FIELDS:
-                print "%s - %s - %s" % (time, key, value)
+                # print "%s - %s - %s" % (time, key, value)
                 forecasts[time].update({key: value})
 
         #pprint.pprint(forecasts)

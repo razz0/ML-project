@@ -12,7 +12,7 @@ class Model(object):
     def __init__(self):
         self.logreg = None
 
-    def generate_model(self, fmi, hsl):
+    def generate_model(self, fmi, hsl, C=1.0):
         '''
         Generate model to predict y from x
 
@@ -46,7 +46,7 @@ class Model(object):
         x = np.array(xx)
         y = np.array(yy)
 
-        self.logreg = linear_model.LogisticRegression()
+        self.logreg = linear_model.LogisticRegression(C=C)
 
         # we create an instance of Neighbours Classifier and fit the data.
         self.logreg.fit(x, y)
