@@ -62,16 +62,21 @@ class APIHarvester(object):
             with open(self.FMI_API_FILE, 'r') as f:
                 self.fmi_apikey = f.read().replace('\n', '')
 
-    @staticmethod
-    def read_datafile(filename):
-        with open(filename, 'r') as f:
-            try:
+    def read_datafile(self, filename):
+        """
+        Read JSON data from a file if it exists
+
+        :param filename:
+        :return:
+        """
+        try:
+            with open(filename, 'r') as f:
                 data = json.load(f)
                 logging.info('Read %s data objects from %s' % (len(data), filename))
                 return data
-            except ValueError:
-                logging.error('Unable to read %s' % filename)
-                return None
+        except (ValueError, IOError):
+            logging.error('Unable to read %s' % filename)
+            return None
 
     def read_fmi_datafile(self):
         with open(self.FMI_DATA_FILE, 'r') as f:
