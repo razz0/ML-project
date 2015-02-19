@@ -42,6 +42,9 @@ class Model(object):
                 yy.append(int(float(hsl.get(key))))
 
 #        print max(hsl.values())
+        print 'Weather values: %s' % len(xx)
+        print 'Disruption values: %s' % len(yy)
+        print 'Disruption set: %s' % set(yy)
 
         x = np.array(xx)
         y = np.array(yy)
@@ -55,5 +58,5 @@ class Model(object):
         return self.logreg.predict(x)
 
     def save_model(self):
-        joblib.dump(self.logreg, 'predictor_model.pkl')
+        joblib.dump(self.logreg, 'model/predictor_model.pkl')
 
