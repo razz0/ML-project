@@ -3,16 +3,21 @@
 import json
 import os
 from datetime import timedelta, datetime
+
 import iso8601
 from sklearn.externals import joblib
-from apiharvester import APIHarvester
 
+from apiharvester import APIHarvester
 from models import prediction_models
 
 FORECAST_FILE = 'data/forecasts.json'
 OBSERVED_DISRUPTIONS_FILE = 'data/disruptions_observed.json'
 
 apikey = os.environ.get('fmi_apikey')
+if not apikey:
+    with open(os.environ.get('HOME') + '/fmi_apikey.txt', 'r') as f:
+        apikey = f.read().replace('\n', '')
+
 harvester = APIHarvester(apikey=apikey)
 
 forecasts = harvester.fmi_forecast()

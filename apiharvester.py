@@ -54,13 +54,15 @@ class APIHarvester(object):
 
     def __init__(self, loglevel=logging.INFO, logfile='../harvester.log', apikey=None ):
         logging.basicConfig(filename=logfile, level=loglevel, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        logging.info('Harvester initialized')
+        logging.info('Harvester initializing')
 
         if apikey:
             self.fmi_apikey = apikey
         else:
             with open(self.FMI_API_FILE, 'r') as f:
                 self.fmi_apikey = f.read().replace('\n', '')
+
+        logging.info('Harvester initialized')
 
     def read_datafile(self, filename):
         """
