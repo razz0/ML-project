@@ -13,7 +13,7 @@ FORECAST_FILE = 'data/forecasts.json'
 OBSERVED_DISRUPTIONS_FILE = 'data/disruptions_observed.json'
 
 apikey = os.environ.get('fmi_apikey')
-harvester = APIHarvester(logfile="harvester.log", apikey=apikey)
+harvester = APIHarvester(apikey=apikey)
 
 forecasts = harvester.fmi_forecast()
 
