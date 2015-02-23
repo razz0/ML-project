@@ -2,6 +2,7 @@
 Modeling the data and doing predictions from the model
 '''
 import math
+import iso8601
 
 import numpy as np
 from sklearn import linear_model
@@ -46,23 +47,28 @@ class ModelLinear(ModelLogisticRegression):
         joblib.dump(self.model, 'model/linear.pkl')
 
 
-def preprocess_data(fmi_data, hsl_data):
+def preprocess_data(fmi_data, hsl_data, use_hour = False):
     xx = []
     yy = []
 
-    for key in fmi_data:
-        if key in hsl_data:
+    for timestamp in fmi_data:
+        if timestamp in hsl_data:
             #print key
-            fmi_values = map(float, (fmi_data[key].get('r_1h'), fmi_data[key].get('t2m'), fmi_data[key].get('ws_10min')))
+            fmi_values = map(float, (fmi_data[timestamp].get('r_1h'), fmi_data[timestamp].get('t2m'), fmi_data[timestamp].get('ws_10min')))
             if [x for x in fmi_values if math.isnan(x)]:
                 continue
     #                    if fmi_values[0] == -1.0:
     #                        fmi_values[0] = 0  # Assuming "-1.0" rainfall means zero rain
-            if not str(hsl_data[key]).isdigit():
-                print "HSL %s" % hsl_data[key]
+            if not str(hsl_data[timestamp]).isdigit():
+                print "HSL %s" % hsl_data[timestamp]
                 continue
+
+            if use_hour:
+                obs_time = iso8601.parse_date(timestamp).replace(tzinfo=None)
+                fmi_values += [obs_time.hour]
+
             xx.append(fmi_values)
-            yy.append(int(float(hsl_data.get(key))))
+            yy.append(int(float(hsl_data.get(timestamp))))
 
 #    print max(hsl.values())
 #    print 'Weather values: %s' % len(xx)
@@ -96,7 +102,7 @@ predict_model.save_model()
 
 print('Model #1 saved')
 
-#xx, yy = preprocess_data(fmi_data, hsl_data)
+xx, yy = preprocess_data(fmi_data2, hsl_data2, use_hour=True)
 
 predict_model = ModelLinear()
 predict_model.generate_model(xx, yy)
