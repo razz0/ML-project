@@ -26,7 +26,11 @@ class ScikitPredictor(PredictionModel):
     """Pre-calculated Scikit-learn prediction model"""
 
     def __init__(self, name, json_file, model_parameters, model_file):
-        self.model = joblib.load(model_file)
+        try:
+            self.model = joblib.load(model_file)
+        except IOError:
+            self.model = None
+
         super(ScikitPredictor, self).__init__(name, json_file, model_parameters)
 
     def predict(self, *args):
