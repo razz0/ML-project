@@ -47,7 +47,7 @@ class ModelLinear(ModelLogisticRegression):
         joblib.dump(self.model, 'model/linear.pkl')
 
 
-def preprocess_data(fmi_data, hsl_data, use_hour = False):
+def preprocess_data(fmi_data, hsl_data, use_hour=False):
     xx = []
     yy = []
 

@@ -1,18 +1,18 @@
-from datetime import datetime, timedelta, date
-from apiharvester import APIHarvester, daterange
-from predictor import Model
-from sklearn.externals import joblib
+"""Command line tool for trying out the prediction models"""
 
-#################################
+import argparse
 
-weathers = [(0, -5, 25), (30, -1, 25), (0, 10, 5)]
+from models import prediction_models
 
-harvester = APIHarvester()
-b = Model()
-b.generate_model(harvester.read_fmi_datafile(), harvester.read_hsl_datafile())
 
-c = joblib.load('predictor_model.pkl')
+parser = argparse.ArgumentParser(description='Predict traffic disruptions')
+parser.add_argument('temperature', help='Temperature [C]', type=float)
+parser.add_argument('rainfall', help='Precipitation [mm]', type=float)
+parser.add_argument('windspeed', help='Wind speed [m/s]', type=float)
+parser.add_argument('hour', help='Hour of the day', type=int)
+args = parser.parse_args()
 
-for weather in weathers:
-    print '%s - Model B: %s' % (weather, b.predict(weather))
-    print '%s - Model C: %s' % (weather, c.predict(weather))
+for model in prediction_models:
+    value_tuple = (args.rainfall, args.temperature, args.windspeed, args.hour)
+    prediction = model.predict(value_tuple[:model.parameters])
+    print 'Model %s: %s' % (model.name, prediction)
