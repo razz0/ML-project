@@ -1,6 +1,7 @@
 """API harvester module"""
 
 from datetime import datetime, timedelta, date
+import os
 import time
 import iso8601
 
@@ -40,9 +41,9 @@ class APIHarvester(object):
     HSL_BASE = 'http://www.poikkeusinfo.fi/xml/v2/'
     FMI_BASE = 'http://data.fmi.fi/fmi-apikey/{apikey}/wfs'
 
-    FMI_API_FILE = '../fmi_api.txt'
-    FMI_DATA_FILE = '../data/fmi.json'
-    HSL_DATA_FILE = '../data/hsl.json'
+    FMI_API_FILE = '/fmi_api.txt'
+    FMI_DATA_FILE = 'data/fmi.json'
+    HSL_DATA_FILE = 'data/hsl.json'
 
     FMI_FORECAST_PARAMS = {'request': 'getFeature', 'storedquery_id': 'fmi::forecast::hirlam::surface::point::simple', 'place': 'kaisaniemi,helsinki', 'timestep': 60}
     FMI_FORECAST_FIELDS = ['Temperature', 'WindSpeedMS', 'Precipitation1h']
@@ -59,8 +60,10 @@ class APIHarvester(object):
         if apikey:
             self.fmi_apikey = apikey
         else:
-            with open(self.FMI_API_FILE, 'r') as f:
-                self.fmi_apikey = f.read().replace('\n', '')
+            self.fmi_apikey = os.environ.get('fmi_apikey')
+            if not self.fmi_apikey:
+                with open(os.environ.get('HOME') + '/fmi_apikey.txt', 'r') as f:
+                    self.fmi_apikey = f.read().replace('\n', '')
 
         logging.info('Harvester initialized')
 

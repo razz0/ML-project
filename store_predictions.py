@@ -13,20 +13,9 @@ from models import prediction_models
 FORECAST_FILE = 'data/forecasts.json'
 OBSERVED_DISRUPTIONS_FILE = 'data/disruptions_observed.json'
 
-apikey = os.environ.get('fmi_apikey')
-if not apikey:
-    with open(os.environ.get('HOME') + '/fmi_apikey.txt', 'r') as f:
-        apikey = f.read().replace('\n', '')
-
-harvester = APIHarvester(apikey=apikey)
+harvester = APIHarvester()
 
 forecasts = harvester.fmi_forecast()
-
-for model in prediction_models:
-    for timestamp, values in forecasts.iteritems():
-        value_tuple = (float(values['Precipitation1h']), float(values['Temperature']), float(values['WindSpeedMS']))
-        disruption_amount = model.predict(value_tuple)
-        model.disruptions.update({timestamp: disruption_amount})
 
 # Store weather forecasts
 
@@ -36,14 +25,33 @@ stored_forecasts.update(forecasts)
 with open(FORECAST_FILE, 'w') as f:
     json.dump(stored_forecasts, f)
 
+# Load stored disruptions
+
+for model in prediction_models:
+    model.stored_disruptions = harvester.read_datafile(model.JSON_FILE) or {}
+
+# Predict disruptions
+
+for model in prediction_models:
+    for timestamp, values in forecasts.iteritems():
+
+        if timestamp in model.stored_disruptions:
+            continue
+
+        obs_time = iso8601.parse_date(timestamp).replace(tzinfo=None)
+        value_tuple = (float(values['Precipitation1h']), float(values['Temperature']), float(values['WindSpeedMS']),
+                       obs_time.hour)
+        # Strip extra values
+        disruption_amount = model.predict(value_tuple[:model.parameters])
+        model.disruptions.update({timestamp: disruption_amount})
+
 # Store predicted disruptions
 
 for model in prediction_models:
-    stored_disruptions = harvester.read_datafile(model.JSON_FILE) or {}
-    stored_disruptions.update(model.disruptions)
+    model.stored_disruptions.update(model.disruptions)
 
     with open(model.JSON_FILE, 'w') as f:
-        json.dump(stored_disruptions, f)
+        json.dump(model.stored_disruptions, f)
 
 
 # Get and store observed disruptions
