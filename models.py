@@ -2,6 +2,9 @@
 
 import json
 import os
+
+import numpy as np
+from sklearn import linear_model
 from sklearn.externals import joblib
 
 
@@ -39,11 +42,15 @@ class ScikitPredictor(PredictionModel):
 
 
 def init_models():
-    model0 = PredictionModel('0-model', 'data/disruptions_model0.json', 3)
-    model1 = ScikitPredictor('Logistic Regression', 'data/disruptions_logistic_regression.json', 3, 'model/predictor_model.pkl')
-    model2 = ScikitPredictor('Linear Regression', 'data/disruptions_linear_regression.json', 4, 'model/linear.pkl')
+    models = []
+    models.append(PredictionModel('0-model', 'data/disruptions_model0.json', 3))
+    models.append(ScikitPredictor('Logistic Regression', 'data/disruptions_logistic_regression.json', 3, 'model/logistic.pkl'))
+    models.append(ScikitPredictor('Logistic Regression 2', 'data/disruptions_logistic_regression_2.json', 4, 'model/logistic2.pkl'))
+    models.append(ScikitPredictor('Linear Regression 2', 'data/disruptions_linear_regression.json', 4, 'model/linear.pkl'))
+    models.append(ScikitPredictor('Linear Regression', 'data/disruptions_linear_regression_2.json', 3, 'model/linear2.pkl'))
+    models.append(ScikitPredictor('Nearest neighbors (2)', 'data/2nn.json', 4, 'model/2nn.pkl'))
 
-    return [model0, model1, model2]
+    return models
 
 
 prediction_models = init_models()

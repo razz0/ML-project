@@ -6,15 +6,17 @@ import iso8601
 
 import numpy as np
 from sklearn import linear_model
+from sklearn.neighbors import KNeighborsRegressor
 from sklearn.externals import joblib
 
 from apiharvester import APIHarvester
+from models import prediction_models
 
 
 class ModelLogisticRegression(object):
 
     def __init__(self):
-        self.logreg = None
+        self.model = None
 
     def generate_model(self, x, y, C=1.0):
         '''
@@ -22,14 +24,14 @@ class ModelLogisticRegression(object):
 
         :return: None
         '''
-        self.logreg = linear_model.LogisticRegression(C=C)
-        self.logreg.fit(x, y)
+        self.model = linear_model.LogisticRegression(C=C)
+        self.model.fit(x, y)
 
     def predict(self, x):
-        return self.logreg.predict(x)
+        return self.model.predict(x)
 
     def save_model(self):
-        joblib.dump(self.logreg, 'model/predictor_model.pkl')
+        joblib.dump(self.model, 'model/logistic.pkl')
 
 
 class ModelLinear(ModelLogisticRegression):
@@ -45,6 +47,21 @@ class ModelLinear(ModelLogisticRegression):
 
     def save_model(self):
         joblib.dump(self.model, 'model/linear.pkl')
+
+
+class ModelNN(ModelLogisticRegression):
+
+    def generate_model(self, x, y):
+        '''
+        Generate model to predict y from x
+
+        :return: None
+        '''
+        self.model = KNeighborsRegressor(n_neighbors=2)
+        self.model.fit(x, y)
+
+    def save_model(self):
+        joblib.dump(self.model, 'model/2nn.pkl')
 
 
 def preprocess_data(fmi_data, hsl_data, use_hour=False):
@@ -102,10 +119,28 @@ predict_model.save_model()
 
 print('Model #1 saved')
 
+predict_model = ModelLinear()
+predict_model.generate_model(xx, yy)
+joblib.dump(predict_model.model, 'model/linear2.pkl')
+
+print('Model #2 saved')
+
 xx, yy = preprocess_data(fmi_data2, hsl_data2, use_hour=True)
+
+predict_model = ModelLogisticRegression()
+predict_model.generate_model(xx, yy, C=1)
+joblib.dump(predict_model.model, 'model/logistic2.pkl')
+
+print('Model #3 saved')
 
 predict_model = ModelLinear()
 predict_model.generate_model(xx, yy)
 predict_model.save_model()
 
-print('Model #2 saved')
+print('Model #4 saved')
+
+predict_model = ModelNN()
+predict_model.generate_model(xx, yy)
+predict_model.save_model()
+
+print('Model 2NN saved')
