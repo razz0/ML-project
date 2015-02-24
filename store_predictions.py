@@ -37,8 +37,8 @@ for model in prediction_models:
 for model in prediction_models:
     for timestamp, values in forecasts.iteritems():
 
-        if timestamp in model.stored_disruptions:
-            continue
+#        if timestamp in model.stored_disruptions:
+#            continue
 
         obs_time = iso8601.parse_date(timestamp)
         value_tuple = (float(values['Precipitation1h']), float(values['Temperature']), float(values['WindSpeedMS']),
