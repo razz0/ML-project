@@ -3,6 +3,7 @@
 import json
 import os
 from datetime import timedelta, datetime
+from dateutil import tz
 
 import iso8601
 import pytz
@@ -39,7 +40,7 @@ for model in prediction_models:
         if timestamp in model.stored_disruptions:
             continue
 
-        obs_time = iso8601.parse_date(timestamp).replace(tzinfo=None)
+        obs_time = iso8601.parse_date(timestamp)
         value_tuple = (float(values['Precipitation1h']), float(values['Temperature']), float(values['WindSpeedMS']),
                        obs_time.hour)
         # Strip extra values
@@ -61,12 +62,13 @@ stored_observed_disruptions = harvester.read_datafile(OBSERVED_DISRUPTIONS_FILE)
 
 observed_disruptions = {}
 
-now_time = datetime.now(pytz.timezone('Europe/Helsinki'))
+now_time = datetime.utcnow().replace(tzinfo=tz.tzutc())
 
 for timestamp, values in stored_forecasts.iteritems():
-    obs_time = iso8601.parse_date(timestamp).replace(tzinfo=pytz.timezone('Europe/Helsinki'))
-    if timedelta(0) < now_time - obs_time < timedelta(days=2):
-        observed_disruptions[timestamp] = harvester.hsl_api(iso8601.parse_date(timestamp))
+    obs_time = iso8601.parse_date(timestamp)
+    if timedelta(0) < now_time - obs_time: #< timedelta(days=2):  #TODO
+        #finnish_time = iso8601.parse_date(timestamp).astimezone(tz.gettz('Europe/Helsinki'))
+        observed_disruptions[timestamp] = harvester.hsl_api(obs_time)
 
 stored_observed_disruptions.update(observed_disruptions)
 

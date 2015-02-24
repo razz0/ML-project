@@ -82,7 +82,7 @@ def preprocess_data(fmi_data, hsl_data, use_hour=False):
                 continue
 
             if use_hour:
-                obs_time = iso8601.parse_date(timestamp).replace(tzinfo=None)
+                obs_time = iso8601.parse_date(timestamp)
                 fmi_values += [obs_time.hour]
 
             xx.append(fmi_values)

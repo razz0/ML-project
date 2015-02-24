@@ -3,6 +3,7 @@
 from datetime import datetime, timedelta, date
 import os
 import time
+from dateutil import tz
 import iso8601
 
 import json, pprint
@@ -11,6 +12,7 @@ import requests
 from lxml import etree
 from collections import defaultdict
 
+# TODO: Check timezones in FMI harvesting
 
 def daterange(start_date, end_date):
     '''
@@ -111,9 +113,10 @@ class APIHarvester(object):
         :rtype : int
         """
 
-        # TODO: Switch to use UTC timezone instead of local time
+        when_fin = when.astimezone(tz.gettz('Europe/Helsinki'))  # Force UTC+2
 
-        date_string = "%02d%02d%s%02d%02d" % (when.day, when.month, when.year, when.hour, when.minute)
+        date_string = "%02d%02d%s%02d%02d" % \
+                      (when_fin.day, when_fin.month, when_fin.year, when_fin.hour, when_fin.minute)
 
         url = self.HSL_BASE + date_string
 
@@ -126,7 +129,7 @@ class APIHarvester(object):
         result_time = iso8601.parse_date(result_etree.get('time'))
 
         # Check that dates match since API returns current disruptions with invalid parameters
-        assert result_time.date() == when.date()
+        assert result_time.date() == when_fin.date()
 
         disruptions = result_etree.get('valid')
 
