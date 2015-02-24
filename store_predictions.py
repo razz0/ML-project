@@ -5,6 +5,7 @@ import os
 from datetime import timedelta, datetime
 
 import iso8601
+import pytz
 from sklearn.externals import joblib
 
 from apiharvester import APIHarvester
@@ -60,9 +61,10 @@ stored_observed_disruptions = harvester.read_datafile(OBSERVED_DISRUPTIONS_FILE)
 
 observed_disruptions = {}
 
+now_time = datetime.now(pytz.timezone('Europe/Helsinki'))
+
 for timestamp, values in stored_forecasts.iteritems():
-    obs_time = iso8601.parse_date(timestamp).replace(tzinfo=None)
-    now_time = datetime.utcnow()
+    obs_time = iso8601.parse_date(timestamp).replace(tzinfo=pytz.timezone('Europe/Helsinki'))
     if timedelta(0) < now_time - obs_time < timedelta(days=2):
         observed_disruptions[timestamp] = harvester.hsl_api(iso8601.parse_date(timestamp))
 

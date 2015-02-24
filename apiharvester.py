@@ -106,9 +106,13 @@ class APIHarvester(object):
     def hsl_api(self, when):
         """
         Get disruption info from HSL API
+
         :param when: datetime
         :rtype : int
         """
+
+        # TODO: Switch to use UTC timezone instead of local time
+
         date_string = "%02d%02d%s%02d%02d" % (when.day, when.month, when.year, when.hour, when.minute)
 
         url = self.HSL_BASE + date_string
@@ -205,6 +209,7 @@ class APIHarvester(object):
     def harvest_hsl(self, harvest_start, harvest_end, delay=0.5):
         """
         Harvest HSL data and save it to json file. Safe for use by a single process at a time.
+
         :param harvest_start: date or datetime
         :param harvest_end: date or datetime
         :param delay: delay between API calls in seconds

@@ -4,3 +4,5 @@ requests
 numpy==1.8.1
 scipy==0.14.0
 scikit-learn==0.14.1
+pytz==2014.10
+arrow==0.5.0
