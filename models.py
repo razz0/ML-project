@@ -48,7 +48,8 @@ def init_models():
     models.append(ScikitPredictor('Logistic Regression 2', 'data/disruptions_logistic_regression_2.json', 4, 'model/logistic2.pkl'))
     models.append(ScikitPredictor('Linear Regression 2', 'data/disruptions_linear_regression.json', 4, 'model/linear.pkl'))
     models.append(ScikitPredictor('Linear Regression', 'data/disruptions_linear_regression_2.json', 3, 'model/linear2.pkl'))
-    models.append(ScikitPredictor('Nearest neighbors (2)', 'data/2nn.json', 4, 'model/2nn.pkl'))
+    models.append(ScikitPredictor('2NN', 'data/2nn.json', 4, 'model/2nn.pkl'))
+    models.append(ScikitPredictor('4NN', 'data/4nn.json', 4, 'model/4nn.pkl'))
 
     return models
 

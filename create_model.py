@@ -16,8 +16,9 @@ from models import prediction_models
 
 class ModelLogisticRegression(object):
 
-    def __init__(self):
+    def __init__(self, filename):
         self.model = None
+        self.filename = filename
 
     def generate_model(self, x, y, C=1.0):
         '''
@@ -32,7 +33,7 @@ class ModelLogisticRegression(object):
         return self.model.predict(x)
 
     def save_model(self):
-        joblib.dump(self.model, 'model/logistic.pkl')
+        joblib.dump(self.model, self.filename)
 
 
 class ModelLinear(ModelLogisticRegression):
@@ -46,23 +47,17 @@ class ModelLinear(ModelLogisticRegression):
         self.model = linear_model.LinearRegression()
         self.model.fit(x, y)
 
-    def save_model(self):
-        joblib.dump(self.model, 'model/linear.pkl')
-
 
 class ModelNN(ModelLogisticRegression):
 
-    def generate_model(self, x, y):
+    def generate_model(self, x, y, k=2):
         '''
         Generate model to predict y from x
 
         :return: None
         '''
-        self.model = KNeighborsRegressor(n_neighbors=2)
+        self.model = KNeighborsRegressor(n_neighbors=k)
         self.model.fit(x, y)
-
-    def save_model(self):
-        joblib.dump(self.model, 'model/2nn.pkl')
 
 
 def preprocess_data(fmi_data, hsl_data, use_hour=False):
@@ -114,34 +109,40 @@ hsl_data2 = dict([(x, y) for (x, y) in hsl_data.iteritems() if int(x[:4]) in goo
 
 xx, yy = preprocess_data(fmi_data2, hsl_data2)
 
-predict_model = ModelLogisticRegression()
+predict_model = ModelLogisticRegression('model/logistic.pkl')
 predict_model.generate_model(xx, yy, C=1)
 predict_model.save_model()
 
 print('Model #1 saved')
 
-predict_model = ModelLinear()
+predict_model = ModelLinear('model/linear2.pkl')
 predict_model.generate_model(xx, yy)
-joblib.dump(predict_model.model, 'model/linear2.pkl')
+predict_model.save_model()
 
 print('Model #2 saved')
 
 xx, yy = preprocess_data(fmi_data2, hsl_data2, use_hour=True)
 
-predict_model = ModelLogisticRegression()
+predict_model = ModelLogisticRegression('model/logistic2.pkl')
 predict_model.generate_model(xx, yy, C=1)
-joblib.dump(predict_model.model, 'model/logistic2.pkl')
+predict_model.save_model()
 
 print('Model #3 saved')
 
-predict_model = ModelLinear()
+predict_model = ModelLinear('model/linear.pkl')
 predict_model.generate_model(xx, yy)
 predict_model.save_model()
 
 print('Model #4 saved')
 
-predict_model = ModelNN()
+predict_model = ModelNN('model/2nn.pkl')
 predict_model.generate_model(xx, yy)
 predict_model.save_model()
 
 print('Model 2NN saved')
+
+predict_model = ModelNN('model/4nn.pkl')
+predict_model.generate_model(xx, yy, k=4)
+predict_model.save_model()
+
+print('Model 4NN saved')
