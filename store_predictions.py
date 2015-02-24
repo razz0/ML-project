@@ -66,7 +66,7 @@ now_time = datetime.utcnow().replace(tzinfo=tz.tzutc())
 
 for timestamp, values in stored_forecasts.iteritems():
     obs_time = iso8601.parse_date(timestamp)
-    if timedelta(0) < now_time - obs_time: #< timedelta(days=2):  #TODO
+    if timedelta(0) < now_time - obs_time < timedelta(days=2):
         #finnish_time = iso8601.parse_date(timestamp).astimezone(tz.gettz('Europe/Helsinki'))
         observed_disruptions[timestamp] = harvester.hsl_api(obs_time)
 
