@@ -1,12 +1,5 @@
 """Prediction models for traffic disruption prediction based on weather forecast"""
 
-import json
-import os
-
-import numpy as np
-from sklearn import linear_model
-from sklearn.externals import joblib
-
 
 class PredictionModel(object):
     """Prediction model skeleton"""
@@ -27,8 +20,9 @@ class ScikitPredictor(PredictionModel):
 
     def __init__(self, name, json_file, model_parameters, model_file):
         try:
+            from sklearn.externals import joblib
             self.model = joblib.load(model_file)
-        except IOError:
+        except (ImportError, IOError):
             self.model = None
 
         super(ScikitPredictor, self).__init__(name, json_file, model_parameters)
