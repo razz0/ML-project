@@ -10,7 +10,7 @@ import pytz
 from sklearn.externals import joblib
 
 from apiharvester import APIHarvester
-from models import prediction_models
+from models import prediction_models, load_models
 
 FORECAST_FILE = 'data/forecasts.json'
 OBSERVED_DISRUPTIONS_FILE = 'data/disruptions_observed.json'
@@ -33,6 +33,8 @@ for model in prediction_models:
     model.stored_disruptions = harvester.read_datafile(model.JSON_FILE) or {}
 
 # Predict disruptions
+
+load_models(prediction_models)
 
 for model in prediction_models:
     for timestamp, values in forecasts.iteritems():
