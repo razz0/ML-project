@@ -69,3 +69,6 @@ for model in models.prediction_models:
 
     model.save_model()
     print 'Saved model %s' % model.name
+
+# TODO: Select an optimal kNN model by testing the model against year 2013
+# (without strike days 2013-04-03, 2013-05-14 -- 2013-05-20, 2013-11-08)
