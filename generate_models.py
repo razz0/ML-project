@@ -10,7 +10,7 @@ from apiharvester import APIHarvester
 import models
 
 
-def preprocess_data(fmi_data, hsl_data, use_hour=False):
+def preprocess_data(fmi_data, hsl_data, use_hour=False, extra_date_params=False):
     xx = []
     yy = []
 
@@ -29,6 +29,9 @@ def preprocess_data(fmi_data, hsl_data, use_hour=False):
             if use_hour:
                 obs_time = iso8601.parse_date(timestamp)
                 fmi_values += [obs_time.hour]
+            if extra_date_params:
+                fmi_values += [obs_time.isoweekday()]
+                fmi_values += [obs_time.month]
 
             xx.append(fmi_values)
             yy.append(int(float(hsl_data.get(timestamp))))
@@ -46,6 +49,7 @@ def preprocess_data(fmi_data, hsl_data, use_hour=False):
 
 #################################
 
+# TODO: Refactor for more easy adding of models
 
 harvester = APIHarvester()
 
@@ -60,15 +64,20 @@ hsl_data2 = dict([(x, y) for (x, y) in hsl_data.iteritems() if int(x[:4]) in goo
 xx3, yy3 = preprocess_data(fmi_data2, hsl_data2)
 
 xx4, yy4 = preprocess_data(fmi_data2, hsl_data2, use_hour=True)
+xx6, yy6 = preprocess_data(fmi_data2, hsl_data2, use_hour=True, extra_date_params=True)
 
 for model in models.prediction_models:
     if model.parameters == 3:
         model.generate_model(xx3, yy3)
     elif model.parameters == 4:
         model.generate_model(xx4, yy4)
+    elif model.parameters == 6:
+        model.generate_model(xx6, yy6)
+    else:
+        raise Exception('Model requires unsupported amount of parameters')
 
     model.save_model()
-    print 'Saved model %s' % model.name
+    print 'Saved model %s - %s' % (model.name, model.model)
 
-# TODO: Select an optimal kNN model by testing the model against year 2013
+# TODO: Optimize model parameters by testing the model against year 2013
 # (without strike days 2013-04-03, 2013-05-14 -- 2013-05-20, 2013-11-08)

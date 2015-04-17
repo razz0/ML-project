@@ -44,7 +44,7 @@ for model in prediction_models:
 
         obs_time = iso8601.parse_date(timestamp)
         value_tuple = (float(values['Precipitation1h']), float(values['Temperature']), float(values['WindSpeedMS']),
-                       obs_time.hour)
+                       obs_time.hour, obs_time.isoweekday(), obs_time.month)
         # Strip extra values
         disruption_amount = model.predict(value_tuple[:model.parameters])
         model.disruptions.update({timestamp: disruption_amount})
