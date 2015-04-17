@@ -7,7 +7,7 @@ class PredictionModel(object):
     def __init__(self, name, json_file, parameters, **model_kwargs):
         self.name = name
         self.JSON_FILE = json_file
-        self.parameters = parameters
+        self.parameters = parameters  # Number of model parameters
         self.model_kwargs = model_kwargs
         self.disruptions = {}
         self.stored_disruptions = {}
@@ -107,7 +107,6 @@ class ModelRandomForest(ScikitPredictor):
 
         self.model = ensemble.RandomForestClassifier(**self.model_kwargs)
         self.model.fit(x, y)
-        assert self.model.predict(x[0]) == y[0]
 
 
 def init_models():
@@ -120,13 +119,15 @@ def init_models():
     models.append(PredictionModel('0-model', 'data/disruptions_model0.json', 3))
     #models.append(ScikitPredictor('Logistic Regression', 'data/disruptions_logistic_regression.json', 3, 'model/logistic.pkl'))
     models.append(ModelLogisticRegression('Logistic Regression', 'data/disruptions_logistic_regression_2.json', 4, 'model/logistic2.pkl', C=1.0))
-    models.append(ModelLinearRegression('Linear Regression', 'data/disruptions_linear_regression.json', 4, 'model/linear.pkl'))
+    #models.append(ModelLinearRegression('Linear Regression', 'data/disruptions_linear_regression.json', 4, 'model/linear.pkl'))
     #models.append(ScikitPredictor('Linear Regression', 'data/disruptions_linear_regression_2.json', 3, 'model/linear2.pkl'))
-    models.append(ModelNN('2NN', 'data/2nn.json', 4, 'model/2nn.pkl', n_neighbors=2))
+    #models.append(ModelNN('2NN', 'data/2nn.json', 4, 'model/2nn.pkl', n_neighbors=2))
     models.append(ModelNN('3NN', 'data/3nn.json', 4, 'model/3nn.pkl', n_neighbors=3))
     models.append(ModelNN('4NN', 'data/4nn.json', 4, 'model/4nn.pkl', n_neighbors=4))
     models.append(
         ModelRandomForest('Simple Forest', 'data/simple_forest.json', 6, 'model/simple_forest.pkl', n_estimators=50))
+    models.append(
+        ModelRandomForest('Optimized Forest', 'data/opt_forest.json', 6, 'model/opt_forest.pkl'))
 
     return models
 
