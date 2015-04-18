@@ -56,7 +56,7 @@ def preprocess_data(fmi_data, hsl_data, use_hour=False, extra_date_params=False)
 
 #################################
 
-# TODO: Refactor for more easy adding of models
+# TODO: Refactor for more easy adding of parameters?
 
 harvester = APIHarvester()
 
@@ -82,6 +82,10 @@ xx6, yy6 = preprocess_data(fmi_data2, hsl_data2, use_hour=True, extra_date_param
 
 x_test, y_test = preprocess_data(fmi_test, hsl_test, use_hour=True, extra_date_params=True)
 
+def _save_model(generated_model):
+    generated_model.save_model()
+    print 'Saved model %s - %s' % (generated_model.name, generated_model.model)
+
 for model in models.prediction_models:
     x_train = []
     y_train = []
@@ -98,34 +102,33 @@ for model in models.prediction_models:
     else:
         raise Exception('Model requires unsupported amount of parameters')
 
-    if args.optimized:
-        if model.name == 'Optimized Forest':
+    if model.name == 'Optimized Forest':
+        if args.optimized:
             best_score = 0
             best_params = {}
             for n_estimators in range(2, 50):
-                for criterion in ['gini']:  # , 'entropy']:
+                for criterion in ['gini', 'entropy']:
                     for max_features in range(1, 7) + ['auto', 'log2']:
-                        for max_depth in range(10, 40) + [None]:
-                            model.kw_args = dict(n_estimators=n_estimators,
-                                                 criterion=criterion,
-                                                 max_features=max_features,
-                                                 max_depth=max_depth)
-                            model.generate_model(x_train, y_train)
-                            score = model.model.score(x_test, y_test)
-                            if score > best_score:
-                                best_params = model.kw_args
-                                best_score = score
-                                print "%s -- %s" % (score, best_params)
+                        for max_depth in range(1, 30) + [None]:
+                            for class_weight in ['auto', None]:
+                                model.model_kwargs = dict(n_estimators=n_estimators,
+                                                          criterion=criterion,
+                                                          max_features=max_features,
+                                                          max_depth=max_depth,
+                                                          class_weight=class_weight)
+                                model.generate_model(x_train, y_train)
+                                score = model.model.score(x_test, y_test)
+                                if score > best_score:
+                                    best_params = model.model_kwargs
+                                    best_score = score
+                                    print "%s -- %s" % (score, best_params)
 
-            model.kw_args = best_params
+            model.model_kwargs = best_params
             print "Best found params: %s" % best_params
             model.generate_model(x_train, y_train)
-            model.save_model()
+            _save_model(model)
     else:
-        model.generate_model(x_train, y_train)
-        model.save_model()
+        if not args.optimized:
+            model.generate_model(x_train, y_train)
+            _save_model(model)
 
-    print 'Saved model %s - %s' % (model.name, model.model)
-
-# TODO: Optimize model parameters by testing the model against year 2013
-# (without strike days 2013-04-03, 2013-05-14 -- 2013-05-20, 2013-11-08)
