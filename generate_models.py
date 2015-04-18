@@ -11,7 +11,9 @@ from apiharvester import APIHarvester
 import models
 
 parser = argparse.ArgumentParser(description='Generate models')
-parser.add_argument('optimized', help='Generate also optimized models (slow)', type=bool)
+#parser.add_argument('generate', help='Generate normal models', type=bool)
+parser.add_argument('-o', help='Generate optimized models (slow)',
+                    dest='optimized', action='store_const', const=True, default=False)
 args = parser.parse_args()
 
 
@@ -118,10 +120,11 @@ for model in models.prediction_models:
             model.kw_args = best_params
             print "Best found params: %s" % best_params
             model.generate_model(x_train, y_train)
+            model.save_model()
     else:
         model.generate_model(x_train, y_train)
+        model.save_model()
 
-    model.save_model()
     print 'Saved model %s - %s' % (model.name, model.model)
 
 # TODO: Optimize model parameters by testing the model against year 2013
