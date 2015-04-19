@@ -105,6 +105,7 @@ class ModelRandomForest(ScikitPredictor):
         '''
         from sklearn import ensemble
 
+        # Classifier seems to outperform RandomForestRegressor by far...
         self.model = ensemble.RandomForestClassifier(**self.model_kwargs)
         self.model.fit(x, y)
 

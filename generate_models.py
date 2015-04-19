@@ -14,21 +14,32 @@ parser = argparse.ArgumentParser(description='Generate models')
 #parser.add_argument('generate', help='Generate normal models', type=bool)
 parser.add_argument('-o', help='Generate optimized models (slow)',
                     dest='optimized', action='store_const', const=True, default=False)
+parser.add_argument('-v', help='Add verbosity',
+                    dest='verbose', action='store_const', const=True, default=False)
 args = parser.parse_args()
 
 
 def preprocess_data(fmi_data, hsl_data, use_hour=False, extra_date_params=False):
+    '''
+    Format data to numpy arrays.
+
+    :param fmi_data:
+    :param hsl_data:
+    :param use_hour:
+    :param extra_date_params:
+    :return: features in order: [precipitation (1h), air temperature, wind speed (10 min average),
+                                 hour, day of week, month].
+    '''
     xx = []
     yy = []
 
     for timestamp in fmi_data:
         if timestamp in hsl_data:
-            #print key
             fmi_values = map(float, (fmi_data[timestamp].get('r_1h'), fmi_data[timestamp].get('t2m'), fmi_data[timestamp].get('ws_10min')))
             if [x for x in fmi_values if math.isnan(x)]:
                 continue
-    #                    if fmi_values[0] == -1.0:
-    #                        fmi_values[0] = 0  # Assuming "-1.0" rainfall means zero rain
+            if fmi_values[0] == -1.0:
+                fmi_values[0] = 0  # Assuming "-1.0" rainfall means zero rain
             if not str(hsl_data[timestamp]).isdigit():
                 print "HSL %s" % hsl_data[timestamp]
                 continue
@@ -107,10 +118,12 @@ for model in models.prediction_models:
             best_score = 0
             best_params = {}
             for n_estimators in range(2, 50):
+                if args.verbose:
+                    print "Calculating models for %s trees" % n_estimators
                 for criterion in ['gini', 'entropy']:
-                    for max_features in range(1, 7) + ['auto', 'log2']:
-                        for max_depth in range(1, 30) + [None]:
-                            for class_weight in ['auto', None]:
+                    for max_features in range(1, 7):  # + ['auto', 'log2']:
+                        for max_depth in range(3, 15) + [None]:
+                            for class_weight in [None]:  # ['auto', None]:
                                 model.model_kwargs = dict(n_estimators=n_estimators,
                                                           criterion=criterion,
                                                           max_features=max_features,
@@ -125,6 +138,10 @@ for model in models.prediction_models:
 
             model.model_kwargs = best_params
             print "Best found params: %s" % best_params
+            # Best found params:
+            # {'max_features': 2, 'n_estimators': 38, 'criterion': 'gini', 'max_depth': 10, 'class_weight': None}
+            print "Feature importances: %s" % model.model.feature_importances_
+            # Feature importances: [ 0.08076559  0.30474923  0.14358273  0.19469095  0.1400464   0.1361651 ]
             model.generate_model(x_train, y_train)
             _save_model(model)
     else:
