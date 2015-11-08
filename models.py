@@ -152,7 +152,7 @@ def generate_models(models, xx, yy):
     for model in models:
         model.generate_model(xx, yy)
         model.save_model()
-        print 'Saved model %s' % model.name
+        print('Saved model %s' % model.name)
 
 
 prediction_models = init_models()

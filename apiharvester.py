@@ -207,7 +207,7 @@ class APIHarvester(object):
         assert self.hsl_api(datetime(2010, 9, 17, 9, 0)) == 2
         assert self.hsl_api(datetime(2011, 9, 17, 9, 0)) == 4
         assert self.hsl_api(datetime(2015, 1, 29, 15, 15)) == 0
-        print 'HSL OK'
+        print('HSL OK')
 
     def harvest_hsl(self, harvest_start, harvest_end, delay=0.5):
         """

@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, date
-from apiharvester import APIHarvester, daterange
+from .apiharvester import APIHarvester, daterange
 from predictor import *
 
 #################################

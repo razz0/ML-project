@@ -2,7 +2,7 @@
 
 import argparse
 
-from models import prediction_models, load_models
+from .models import prediction_models, load_models
 
 load_models(prediction_models)
 
@@ -17,4 +17,4 @@ for model in prediction_models:
     #print 'Model %s' % (model.model)
     value_tuple = (args.rainfall, args.temperature, args.windspeed, args.hour)
     prediction = model.predict(value_tuple[:model.parameters])
-    print 'Model %s: %s' % (model.name, prediction)
+    print('Model %s: %s' % (model.name, prediction))

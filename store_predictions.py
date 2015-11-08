@@ -9,8 +9,8 @@ import iso8601
 import pytz
 from sklearn.externals import joblib
 
-from apiharvester import APIHarvester
-from models import prediction_models, load_models
+from .apiharvester import APIHarvester
+from .models import prediction_models, load_models
 
 FORECAST_FILE = 'data/forecasts.json'
 OBSERVED_DISRUPTIONS_FILE = 'data/disruptions_observed.json'
@@ -37,7 +37,7 @@ for model in prediction_models:
 load_models(prediction_models)
 
 for model in prediction_models:
-    for timestamp, values in forecasts.iteritems():
+    for timestamp, values in forecasts.items():
 
 #        if timestamp in model.stored_disruptions:
 #            continue
@@ -66,7 +66,7 @@ observed_disruptions = {}
 
 now_time = datetime.utcnow().replace(tzinfo=tz.tzutc())
 
-for timestamp, values in stored_forecasts.iteritems():
+for timestamp, values in stored_forecasts.items():
     obs_time = iso8601.parse_date(timestamp)
     if timedelta(0) < now_time - obs_time < timedelta(days=2):
         #finnish_time = iso8601.parse_date(timestamp).astimezone(tz.gettz('Europe/Helsinki'))
