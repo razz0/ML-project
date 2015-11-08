@@ -49,7 +49,7 @@ class ScikitPredictor(PredictionModel):
         from sklearn.externals import joblib
         try:
             self.model = joblib.load(self.filename)
-        except IOError:
+        except (IOError, FileNotFoundError):
             pass
 
 
@@ -110,6 +110,15 @@ class ModelRandomForest(ScikitPredictor):
         self.model.fit(x, y)
 
 
+class ModelSVM(ScikitPredictor):
+
+    def generate_model(self, x, y):
+        from sklearn import svm
+
+        self.model = svm.SVC(**self.model_kwargs)
+        self.model.fit(x, y)
+
+
 def init_models():
     """
     Initialize models and return them as list
@@ -125,10 +134,12 @@ def init_models():
     #models.append(ModelNN('2NN', 'data/2nn.json', 4, 'model/2nn.pkl', n_neighbors=2))
     models.append(ModelNN('3NN', 'data/3nn.json', 4, 'model/3nn.pkl', n_neighbors=3))
     models.append(ModelNN('4NN', 'data/4nn.json', 4, 'model/4nn.pkl', n_neighbors=4))
-    models.append(
-        ModelRandomForest('Simple Forest', 'data/simple_forest.json', 6, 'model/simple_forest.pkl', n_estimators=50))
+    # models.append(
+    #     ModelRandomForest('Simple Forest', 'data/simple_forest.json', 6, 'model/simple_forest.pkl', n_estimators=50))
     models.append(
         ModelRandomForest('Optimized Forest', 'data/opt_forest.json', 6, 'model/opt_forest.pkl'))
+    # models.append(
+    #     ModelSVM('SVM', 'data/svm.json', 6, 'model/svm.pkl'))
 
     return models
 

@@ -7,8 +7,8 @@ import argparse
 
 import numpy as np
 
-from .apiharvester import APIHarvester
-from . import models
+from apiharvester import APIHarvester
+import models
 
 parser = argparse.ArgumentParser(description='Generate models')
 #parser.add_argument('generate', help='Generate normal models', type=bool)
@@ -117,12 +117,12 @@ for model in models.prediction_models:
         if args.optimized:
             best_score = 0
             best_params = {}
-            for n_estimators in range(2, 50):
+            for n_estimators in range(5, 50, 5):
                 if args.verbose:
                     print("Calculating models for %s trees" % n_estimators)
                 for criterion in ['gini', 'entropy']:
-                    for max_features in range(1, 7):  # + ['auto', 'log2']:
-                        for max_depth in list(range(3, 15)) + [None]:
+                    for max_features in range(1, 7, 2):  # + ['auto', 'log2']:
+                        for max_depth in list(range(3, 15, 3)) + [None]:
                             for class_weight in [None]:  # ['auto', None]:
                                 model.model_kwargs = dict(n_estimators=n_estimators,
                                                           criterion=criterion,

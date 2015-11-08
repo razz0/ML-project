@@ -9,8 +9,8 @@ import iso8601
 import pytz
 from sklearn.externals import joblib
 
-from .apiharvester import APIHarvester
-from .models import prediction_models, load_models
+from apiharvester import APIHarvester
+from models import prediction_models, load_models
 
 FORECAST_FILE = 'data/forecasts.json'
 OBSERVED_DISRUPTIONS_FILE = 'data/disruptions_observed.json'
